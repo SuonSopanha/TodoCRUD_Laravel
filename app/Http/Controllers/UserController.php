@@ -16,6 +16,7 @@ class UserController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
+
     public function index()
     {
         return User::all();
@@ -88,5 +89,3 @@ class UserController extends Controller
         return response()->json(null, 204);
     }
 }
-
-

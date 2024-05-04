@@ -2,11 +2,19 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\StoreTodoReqeust;
+use App\Http\Requests\UpdateTodoReqest;
+use App\Http\Resources\TodoCollection;
+use App\Http\Resources\TodoResouce;
 use App\Models\Todo;
+use App\Http\Traits\HttpResponses;
+use GrahamCampbell\ResultType\Success;
 use Illuminate\Http\Request;
 
 class TodoController extends Controller
 {
+    use HttpResponses;
+
     /**
      * Display a listing of the todos.
      *
@@ -15,7 +23,7 @@ class TodoController extends Controller
     public function index()
     {
         $todos = Todo::all();
-        return response()->json($todos);
+        return $this->success(new TodoCollection($todos));
     }
 
     /**
@@ -24,17 +32,12 @@ class TodoController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    public function store(Request $request)
+    public function store(StoreTodoReqeust $request)
     {
-        $request->validate([
-            'user_id' => 'required|exists:users,id',
-            'title' => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'completed' => 'boolean',
-        ]);
+        $validatedData = $request->validated();
 
-        $todo = Todo::create($request->all());
-        return response()->json($todo, 201);
+        $todo = Todo::create($validatedData);
+        return $this->success(new TodoResouce($todo), 201);
     }
 
     /**
@@ -45,8 +48,14 @@ class TodoController extends Controller
      */
     public function show($id)
     {
-        $todo = Todo::findOrFail($id);
-        return response()->json($todo);
+        $todo = Todo::find($id);
+
+        if (!$todo) {
+            return $this->error(null, 'Todo not found', 404);
+        }
+
+
+        return $this->success(new TodoResouce($todo));
     }
 
     /**
@@ -56,18 +65,18 @@ class TodoController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, $id)
+    public function update(UpdateTodoReqest $request, $id)
     {
-        $request->validate([
-            'user_id' => 'exists:users,id',
-            'title' => 'string|max:255',
-            'description' => 'nullable|string',
-            'completed' => 'boolean',
-        ]);
 
-        $todo = Todo::findOrFail($id);
-        $todo->update($request->all());
-        return response()->json($todo, 200);
+
+        $todo = Todo::find($id);
+
+        if (!$todo) {
+            return $this->error(null, 'Todo not found', 404);
+        }
+        $validatedData = $request->validated();
+        $todo->update($validatedData);
+        return $this->success(new TodoResouce($todo));
     }
 
     /**
@@ -78,8 +87,12 @@ class TodoController extends Controller
      */
     public function destroy($id)
     {
-        $todo = Todo::findOrFail($id);
+        $todo = Todo::find($id);
+
+        if (!$todo) {
+            return $this->error(null, 'Todo not found', 404);
+        }
         $todo->delete();
-        return response()->json(null, 204);
+        return $this->success(null, 'Todo deleted');
     }
 }
