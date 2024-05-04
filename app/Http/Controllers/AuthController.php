@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Auth;
+namespace App\Http\Controllers;
 
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -62,5 +62,12 @@ class AuthController extends Controller
         $token = $user->createToken('AuthToken')->plainTextToken;
 
         return response()->json(['access_token' => $token, 'token_type' => 'Bearer']);
+    }
+
+    public function logout(Request $request)
+    {
+        $user = $request->user();
+        $user->tokens()->delete();
+        return response()->json(['message' => 'Logout successful']);
     }
 }
